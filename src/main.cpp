@@ -148,7 +148,6 @@ int mapAxis(int value) {
 // ======================== HC-SR04 ULTRASON ========================
 
 // Lit UN capteur ultrason (round-robin). Appeler toutes les ~25ms.
-// Trigger partage : un pulse declenche les 4, mais on lit 1 echo a la fois.
 void updateUltrasonic() {
     unsigned long now = millis();
     if (now - usLastRead < US_INTERVAL_MS) return;
@@ -239,29 +238,23 @@ void processGamepad(ControllerPtr ctl) {
     strafe = strafe * maxSpd / 255;
 
     // ---- ANTI-COLLISION ULTRASON (axes cardinaux) ----
-    // Bloquer le mouvement si obstacle trop proche dans cette direction
-    if (usDist[0] < OBSTACLE_DIST_CM && fwd > 0)     fwd = 0;     // Avant
-    if (usDist[1] < OBSTACLE_DIST_CM && fwd < 0)     fwd = 0;     // Arriere
-    if (usDist[2] < OBSTACLE_DIST_CM && strafe < 0)   strafe = 0;  // Gauche
-    if (usDist[3] < OBSTACLE_DIST_CM && strafe > 0)   strafe = 0;  // Droite
+    if (usDist[0] < OBSTACLE_DIST_CM && fwd > 0)      fwd = 0;     // Avant
+    if (usDist[1] < OBSTACLE_DIST_CM && fwd < 0)      fwd = 0;     // Arriere
+    if (usDist[2] < OBSTACLE_DIST_CM && strafe < 0)    strafe = 0;  // Gauche
+    if (usDist[3] < OBSTACLE_DIST_CM && strafe > 0)    strafe = 0;  // Droite
 
     // ---- ANTI-COLLISION IR (diagonales) ----
-    // Reduire la vitesse si un IR diagonal detecte un obstacle proche
-    bool irFL = irDetected(IR_FL_BIT);  // Avant-gauche
-    bool irFR = irDetected(IR_FR_BIT);  // Avant-droit
-    bool irRL = irDetected(IR_RL_BIT);  // Arriere-gauche
-    bool irRR = irDetected(IR_RR_BIT);  // Arriere-droit
+    bool irFL = irDetected(IR_FL_BIT);
+    bool irFR = irDetected(IR_FR_BIT);
+    bool irRL = irDetected(IR_RL_BIT);
+    bool irRR = irDetected(IR_RR_BIT);
 
-    // IR avant-gauche : ralentir avant ET strafe gauche
     if (irFL && fwd > 0)    fwd    = (int)(fwd * IR_SLOW_FACTOR);
     if (irFL && strafe < 0) strafe = (int)(strafe * IR_SLOW_FACTOR);
-    // IR avant-droit : ralentir avant ET strafe droite
     if (irFR && fwd > 0)    fwd    = (int)(fwd * IR_SLOW_FACTOR);
     if (irFR && strafe > 0) strafe = (int)(strafe * IR_SLOW_FACTOR);
-    // IR arriere-gauche : ralentir arriere ET strafe gauche
     if (irRL && fwd < 0)    fwd    = (int)(fwd * IR_SLOW_FACTOR);
     if (irRL && strafe < 0) strafe = (int)(strafe * IR_SLOW_FACTOR);
-    // IR arriere-droit : ralentir arriere ET strafe droite
     if (irRR && fwd < 0)    fwd    = (int)(fwd * IR_SLOW_FACTOR);
     if (irRR && strafe > 0) strafe = (int)(strafe * IR_SLOW_FACTOR);
 
@@ -278,26 +271,23 @@ void processGamepad(ControllerPtr ctl) {
     // ---- EPAULE (stick droit Y) ----
     int shoulderInput = applyDeadzone(ctl->axisRY());
     if (shoulderInput != 0) {
-        // Stick vers le haut (negatif) = epaule monte = angle augmente
         shoulderAngle -= (shoulderInput / 512.0f) * SHOULDER_DEG_S * dt;
         shoulderAngle = constrain(shoulderAngle, (float)SHOULDER_MIN, (float)SHOULDER_MAX);
     }
 
-    // Bouton Y = home bras
     if (ctl->y()) {
         shoulderAngle = SHOULDER_HOME;
     }
     shoulderServo.write((int)shoulderAngle);
 
     // ---- PINCE (gachettes LT/RT) ----
-    // RT (throttle) = fermer, LT (brake) = ouvrir
     int gripperInput = ctl->throttle() - ctl->brake();
     int gripperAngle = map(gripperInput, -1023, 1023, GRIPPER_OPEN, GRIPPER_CLOSE);
     gripperServo.write(gripperAngle);
 }
 
 // ======================== TEST MOTEURS ========================
-// Envoyer 'T' sur le port serie pour tester chaque moteur
+
 void testMotor(const char* name, int pin1, int pin2) {
     Serial.printf("  Test %s : avant...", name);
     setMotor(pin1, pin2, 150);
