@@ -60,9 +60,10 @@ y_bras_center  = (y_bras_inner + y_bras_outer) / 2;   // ~12.1
 y_biel_center  = 14;              // offset Y biellette (spec)
 
 // --- Fork (meme geometrie aux pivots B et D) ---
-fork_gap       = biel_w + 2*tol;  // 12.6 — la biellette passe dedans
-fork_inner_y   = y_biel_center - fork_gap/2;     // ~7.7
-fork_outer_y   = y_biel_center + fork_gap/2;     // ~20.3
+// Jeu biellette/flasque = 0.8mm (tol=0.3 + 0.5 de marge vs precision OpenSCAD)
+fork_gap       = biel_w + 2*tol + 1;  // 13.6 — la biellette passe dedans
+fork_inner_y   = y_biel_center - fork_gap/2;     // ~7.2
+fork_outer_y   = y_biel_center + fork_gap/2;     // ~20.8
 fork_t         = 3;               // epaisseur d'un flasque
 
 // --- Bras ---
@@ -186,16 +187,20 @@ module support_epaule() {
                     translate([sx,-w,z_side-0.1]) cube([w,w,0.1]);
                     translate([sx>0?14-w:-14,-w,z_top-0.1]) cube([w,w,0.1]);
                 }
-            // Fourche pivot B
+            // Pivot B — bloc chunky integre (cantilever, flasque unique)
+            // Remplace l'ancienne fourche : un seul bloc plein tient la
+            // biellette via un M3 long, rondelle large + ecrou nylstop a
+            // l'exterieur (pas de flasque exterieur).
+            // Taper 31° sous le bloc pour impression sans support :
+            //   Y croit de 0 a fork_inner_y=7.2 quand Z va de z_side a H_pivot-5
+            //   angle = atan(7.2 / (H_pivot-5-z_side)) ~ 31° de la verticale
             hull() {
-                translate([-7,0,H_pivot-6]) cube([14,2,12]);
-                translate([-7,fork_inner_y-fork_t,H_pivot-5]) cube([14,2,10]);
+                translate([-7, -w, z_side]) cube([14, w, 0.1]);
+                translate([-7, -w, H_pivot-5]) cube([14, fork_inner_y+w, 0.1]);
             }
-            for (fy=[fork_inner_y-fork_t, fork_outer_y])
-                translate([-7,fy,H_pivot-5]) cube([14,fork_t,10]);
-            for (fy=[fork_inner_y-fork_t/2, fork_outer_y+fork_t/2])
-                translate([0,fy,H_pivot])
-                    rotate([-90,0,0]) cylinder(d=10,h=fork_t,center=true);
+            // Bloc plein autour du pivot (14mm large, 10.2mm profond, 10mm haut)
+            translate([-7, -w, H_pivot-5])
+                cube([14, fork_inner_y+w, 10]);
         }
 
         // --- Poche corps servo ---
@@ -213,13 +218,13 @@ module support_epaule() {
             translate([sx*(px/2+w/2), ear_y_center, 0])
                 rotate([0,90,0]) cylinder(d=m3, h=w+2, center=true);
 
-        // --- Pivot B (M3 en Y, fraisage + ecrou) ---
-        translate([0, fork_inner_y-fork_t-1, H_pivot])
-            rotate([-90,0,0]) cylinder(d=m3, h=fork_gap+2*fork_t+2);
-        translate([0, fork_inner_y-fork_t-0.1, H_pivot])
+        // --- Pivot B cantilever (M3 long en Y) ---
+        // Le M3 traverse le bloc de -Y (arriere plaque) vers +Y (biellette).
+        // Fraisage tete cote arriere ; biellette + rondelle + nylstop en externe.
+        translate([0, -w-0.1, H_pivot])
+            rotate([-90,0,0]) cylinder(d=m3, h=fork_inner_y+w+0.2);
+        translate([0, -w-0.1, H_pivot])
             rotate([-90,0,0]) cylinder(d=m3_head_d, h=m3_head_h);
-        translate([0, fork_outer_y+fork_t-m3_nut_h, H_pivot])
-            rotate([-90,30,0]) cylinder(d=m3_nut_d, h=m3_nut_h+0.1, $fn=6);
 
         // --- Fixation chassis (4xM3, fraisage interieur) ---
         for (dx=[-18,18]) for (dy=[-13,13])
@@ -341,29 +346,30 @@ module bras() {
 // ----- PIECE 2b : Platine CD -----
 module platine_cd() {
     pt = plt_t;  pw = plt_w;
+    // Largeur Y du haut de la barre (aussi utilisee pour le bloc pivot D)
+    // Y_max = 6.7, marge 1.3mm vs biellette (Y_min=8)
+    _plt_w_top = 2*(fork_inner_y - 1);  // 13.4mm
     difference() {
         union() {
             // Barre verticale C→D — efilee vers D pour eviter la biellette
-            // Biellette Y_min = y_biel_center - biel_w/2 = 8
-            // On recule de 1mm supplementaire pour marge large
-            // Bas (C) : largeur pw=20, Haut (D) : largeur 2*(fork_inner_y-1)=13.4
-            _plt_w_top = 2*(fork_inner_y - 1);  // 13.4mm — Y_max = 6.7, marge 1.3mm
+            // Bas (C) : largeur pw=20, Haut (D) : largeur _plt_w_top=13.4
             hull() {
                 translate([-pt/2,-pw/2,-2]) cube([pt,pw,4]);
                 translate([-pt/2,-_plt_w_top/2,H_pivot-2]) cube([pt,_plt_w_top,4]);
             }
-            // Patte vers fourche D — reste sous la biellette
-            _patte_y_max = fork_inner_y - 1;  // 6.7, marge 1.3mm vs biellette
+            // Pivot D cantilever — bloc integre (remplace ancienne fourche)
+            // S'etend du haut de la barre (Z=H_pivot-2) jusqu'a Z=H_pivot+5,
+            // en Y de -_plt_w_top/2 a fork_inner_y (couvre la zone pivot).
+            // Biellette tenue en cantilever par M3 long + rondelle + nylstop.
             hull() {
-                translate([-pt/2,_patte_y_max-3,H_pivot-4]) cube([pt,3,8]);
-                translate([-pt/2,fork_inner_y-fork_t-2,H_pivot-4]) cube([pt,2,8]);
+                translate([-pt/2, -_plt_w_top/2, H_pivot-2])
+                    cube([pt, _plt_w_top, 0.1]);
+                translate([-pt/2, -_plt_w_top/2, H_pivot+5-0.1])
+                    cube([pt, _plt_w_top/2 + fork_inner_y, 0.1]);
             }
-            // Fourche D (meme geometrie que fourche B)
-            for (fy=[fork_inner_y-fork_t, fork_outer_y])
-                translate([-pt/2,fy,H_pivot-5]) cube([pt,fork_t,10]);
-            for (fy=[fork_inner_y-fork_t/2, fork_outer_y+fork_t/2])
-                translate([0,fy,H_pivot])
-                    rotate([-90,0,0]) cylinder(d=10,h=fork_t,center=true);
+            // Bossage pivot D (d=10, largit en X pour le fraisage tete M3)
+            translate([0, fork_inner_y - fork_t/2, H_pivot])
+                rotate([-90,0,0]) cylinder(d=10, h=fork_t, center=true);
             // Bossage pivot C
             rotate([0,90,0]) cylinder(d=12,h=pt,center=true);
             // Plateforme pince (face avant +X)
@@ -371,13 +377,12 @@ module platine_cd() {
         }
         // Pivot C (M3 en Y)
         translate([0,-pw/2-1,0]) rotate([-90,0,0]) cylinder(d=m3, h=pw+2);
-        // Pivot D (M3 en Y + fraisage + ecrou)
-        translate([0, fork_inner_y-fork_t-1, H_pivot])
-            rotate([-90,0,0]) cylinder(d=m3, h=fork_gap+2*fork_t+2);
-        translate([0, fork_inner_y-fork_t-0.1, H_pivot])
+        // Pivot D cantilever (M3 long traverse le bloc -Y → +Y)
+        // Fraisage tete cote -Y ; biellette + rondelle + nylstop en externe.
+        translate([0, -_plt_w_top/2 - 0.1, H_pivot])
+            rotate([-90,0,0]) cylinder(d=m3, h=_plt_w_top/2 + fork_inner_y + 0.2);
+        translate([0, -_plt_w_top/2 - 0.1, H_pivot])
             rotate([-90,0,0]) cylinder(d=m3_head_d, h=m3_head_h);
-        translate([0, fork_outer_y+fork_t-m3_nut_h, H_pivot])
-            rotate([-90,30,0]) cylinder(d=m3_nut_d, h=m3_nut_h+0.1, $fn=6);
         // Fixation pince (2xM3 en X)
         for (dy=[-8, 8])
             translate([0, dy, -3]) rotate([0,90,0]) cylinder(d=m3, h=pt+8, center=true);
@@ -445,42 +450,100 @@ module machoire_gauche() {
 }
 
 module pince_corps() {
-    hw = jaw_off + brk_wall;
-    d = brk_depth;  pz = pivot_z_brk;
+    hw = jaw_off + brk_wall;          // 17 — face interieure des parois laterales
+    d  = brk_depth;                   // 14 — profondeur Y
+    pz = pivot_z_brk;                 // -22 — Z du pivot des machoires
+
+    // --- Fixation SG90 : 2 tabs recevant les oreilles (M2) ---
+    // Oreilles SG90 apres Rx(-90) + translate(jaw_off,0,pz) :
+    //   Y = [-10, -8], X = [-3.25, 29.25] (entraxe trous = 28)
+    // Trous oreilles : X = jaw_off ± 14 = [-1, +27]
+    tab_t      = 2;                   // epaisseur du tab (2mm suffisant pour M2 auto-taraud.)
+    tab_w      = 4;                   // largeur X de chaque tab (evite corps servo)
+    tab_y_out  = -d/2 - 3 - tab_t;    // -12 : face exterieure (3mm d'air avant oreilles)
+    ear_dx     = 14;                  // demi-entraxe oreilles SG90
+    tab_z_bot  = pz - 7;              // -29 : sous le corps servo (qui va a Z=-28)
+
+    // Plaque fixation agrandie en +X pour couvrir le tab droit (centre a X=+27)
+    top_x_min  = -hw - 5;                               // -22
+    top_x_max  = jaw_off + ear_dx + tab_w/2 + 1;        // +30
+    top_y_min  = tab_y_out;                             // -12 (rejoint les tabs)
+
+    // Diametre exterieur des dents (pitch_d + 2*addendum, addendum = 1/dp)
+    gear_od = jaw_n / jaw_dp + 2/jaw_dp;                // ≈ 30.6
 
     difference() {
         union() {
-            // Plaque fixation (haut)
-            translate([-hw-5, -d/2, -3]) cube([2*hw+10+10, d, 3]);
-            // Paroi gauche
-            translate([-hw-brk_wall, -d/2, pz-3]) cube([brk_wall, d, -pz+6]);
-            // Paroi droite
-            translate([hw, -d/2, pz-3]) cube([brk_wall+10, d, -pz+6]);
-            // Paroi arriere
-            translate([-hw-brk_wall, d/2-brk_wall, pz-3]) cube([2*hw+2*brk_wall+10, brk_wall, -pz+6]);
-            // Renforts pivots
-            for (x=[-jaw_off, jaw_off])
-                translate([x,0,pz]) rotate([90,0,0]) cylinder(d=14, h=d, center=true);
+            // --- Plaque de fixation platine (agrandie) ---
+            translate([top_x_min, top_y_min, -3])
+                cube([top_x_max - top_x_min, d/2 - top_y_min, 3]);
+
+            // --- Parois laterales (SYMETRIQUES, 4mm ; ex-brk_wall+10 corrige) ---
+            for (sx = [-(hw + brk_wall), hw])
+                translate([sx, -d/2, pz-3]) cube([brk_wall, d, -pz+6]);
+
+            // --- Paroi arriere (largeur recalee apres correction paroi droite) ---
+            translate([-hw - brk_wall, d/2 - brk_wall, pz-3])
+                cube([2*(hw + brk_wall), brk_wall, -pz+6]);
+
+            // --- Renforts pivots (bossages Ø14 le long de Y) ---
+            for (x = [-jaw_off, jaw_off])
+                translate([x, 0, pz]) rotate([90,0,0])
+                    cylinder(d=14, h=d, center=true);
+
+            // --- Tabs de fixation oreilles SG90 ---
+            // 2 tabs verticaux a Y=[-12,-10], descendant de la plaque fix (Z=-3)
+            // jusque sous le corps du servo (Z=-29).
+            for (ex = [-ear_dx, ear_dx])
+                translate([jaw_off + ex - tab_w/2, tab_y_out, tab_z_bot])
+                    cube([tab_w, tab_t, -3 - tab_z_bot]);
         }
-        // Pivots machoires (M3 en Y + fraisage + ecrou)
-        for (x=[-jaw_off, jaw_off]) {
-            translate([x,-d/2-0.1,pz]) rotate([-90,0,0]) cylinder(d=m3, h=d+0.2);
-            translate([x,-d/2-0.1,pz]) rotate([-90,0,0]) cylinder(d=m3_head_d, h=m3_head_h);
-            translate([x,d/2-m3_nut_h,pz]) rotate([-90,30,0]) cylinder(d=m3_nut_d, h=m3_nut_h+0.1, $fn=6);
-        }
-        // Degagement engrenages
-        translate([-jaw_off+5,-d/2-0.1,pz-15]) cube([2*jaw_off-10, d+0.2, 30]);
-        // Passage SG90 (traversee pivot droit pour l'arbre)
-        translate([jaw_off,-d/2-0.1,pz]) rotate([-90,0,0]) cylinder(d=14, h=d+0.2);
-        // Fixation platine (2xM3)
-        for (dx=[-8,8]) translate([dx,0,-3.1]) cylinder(d=m3, h=3.2);
-        // Ouverture doigts
-        translate([-jaw_off+2,-d/2-0.1,pz-3.1]) cube([2*jaw_off-4, d+0.2, 3.2]);
-        // Degagement platine CD — la paroi arriere traversait la platine.
-        // En coords locales pince : la platine est a local_z ≈ -pince_x_offset
-        // On creuse une encoche dans la paroi arriere pour la laisser passer.
-        translate([-(plt_w/2+3), -0.1, -(pince_x_offset + plt_t/2 + 1)])
-            cube([plt_w+6, d/2+2, pince_x_offset + plt_t/2 + 1 - 3]);
+
+        // ====== Soustractions ======
+
+        // --- Pivot gauche : M3 + fraisage + ecrou nylstop ---
+        translate([-jaw_off, -d/2 - 0.1, pz]) rotate([-90,0,0])
+            cylinder(d=m3, h=d+0.2);
+        translate([-jaw_off, -d/2 - 0.1, pz]) rotate([-90,0,0])
+            cylinder(d=m3_head_d, h=m3_head_h);
+        translate([-jaw_off,  d/2 - m3_nut_h, pz]) rotate([-90,30,0])
+            cylinder(d=m3_nut_d, h=m3_nut_h + 0.1, $fn=6);
+
+        // --- Pivot droit : passage arbre+hub SG90 (Ø7 au lieu de Ø14) ---
+        // L'ex-Ø14 vidait entierement le renfort du pivot droit.
+        // Ø7 laisse passer le hub SG90 (Ø5.5) avec jeu, et preserve 3.5mm de renfort.
+        translate([jaw_off, -d/2 - 0.1, pz]) rotate([-90,0,0])
+            cylinder(d=7, h=d+0.2);
+
+        // --- Degagement machoires (Ø32 cylindrique autour de chaque pivot) ---
+        // Remplace l'ex-cube rectangulaire qui etait trop etroit (X=[-8,+8]).
+        // Libere la rotation complete du gear (d_tete ≈ 30.6) sur l'epaisseur du jaw.
+        // Materiau conserve HORS du jaw (Y<-3.3 et Y>+3.3), ce qui preserve les
+        // parois laterales en bordure (Y=±7) et la paroi arriere.
+        for (x = [-jaw_off, jaw_off])
+            translate([x, -jaw_gt/2 - tol, pz]) rotate([-90,0,0])
+                cylinder(d = gear_od + 2, h = jaw_gt + 2*tol);
+
+        // --- Fixation platine (2xM3 dans la plaque fix) ---
+        for (dx = [-8, 8])
+            translate([dx, 0, -3.1]) cylinder(d=m3, h=3.2);
+
+        // --- Ouverture doigts (ELARGIE : toute la largeur interieure) ---
+        // Ex-X=[-11,+11] trop etroit, le bras de la machoire touchait la paroi
+        // a angle=0 (X=16 au passage Z=-25). Maintenant X=[-16.5, +16.5].
+        translate([-hw + 0.5, -d/2 - 0.1, pz - 3.1])
+            cube([2*hw - 1, d + 0.2, 3.2]);
+
+        // --- 2x M2 fixation oreilles SG90 ---
+        // Traversent le tab (2mm) puis entrent dans l'oreille du servo (2mm).
+        // Utiliser vis auto-taraudeuses M2x8 (ou M2x6 avec tete reduite).
+        for (ex = [-ear_dx, ear_dx])
+            translate([jaw_off + ex, tab_y_out - 0.1, pz]) rotate([-90,0,0])
+                cylinder(d=m2, h=tab_t + 3);
+
+        // --- Degagement platine CD (la paroi arriere traversait la platine) ---
+        translate([-(plt_w/2 + 3), -0.1, -(pince_x_offset + plt_t/2 + 1)])
+            cube([plt_w + 6, d/2 + 2, pince_x_offset + plt_t/2 + 1 - 3]);
     }
 }
 
@@ -570,10 +633,10 @@ module collision_sweep(ap=10) {
 // ===================== SECTION 7 : RENDU ====================================
 
 // --- Assemblage normal ---
-assemblage_complet(angle_epaule=45, angle_pince=10);
+ assemblage_complet(angle_epaule=45, angle_pince=10);
 
 // --- Detection de collisions (decommenter pour voir les zones rouges) ---
-// check_collisions(45, 10);
+//check_collisions(45, 10);
 
 // --- Balayage multi-angles (decommenter pour test complet) ---
 // collision_sweep(10);
