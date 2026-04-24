@@ -633,7 +633,7 @@ module collision_sweep(ap=10) {
 // ===================== SECTION 7 : RENDU ====================================
 
 // --- Assemblage normal ---
- assemblage_complet(angle_epaule=45, angle_pince=10);
+ //assemblage_complet(angle_epaule=45, angle_pince=10);
 
 // --- Detection de collisions (decommenter pour voir les zones rouges) ---
 //check_collisions(45, 10);
@@ -649,7 +649,7 @@ module collision_sweep(ap=10) {
 // --- Export STL (decommenter UN SEUL) ---
 // support_epaule();
 // bras();
-// platine_cd();
+ platine_cd();
 // biellette();
 // pince_corps();
 // machoire_droite();
