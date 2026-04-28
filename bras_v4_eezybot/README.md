@@ -18,8 +18,8 @@ bras_v4_eezybot/
 ├── stl_original/
 │   ├── README.txt             ← README original daGHIZmo
 │   ├── LICENSE.txt            ← CC BY-NC
-│   ├── print/                 ← 16 STL À IMPRIMER ✅
-│   ├── skip_no_rotation/      ← 6 STL à ignorer (rotation de base) ❌
+│   ├── print/                 ← 14 STL À IMPRIMER ✅
+│   ├── skip/                  ← 8 STL à ignorer (6 rotation + 1 variante horarm + 1 capot pince optionnel) ❌
 │   ├── reference_cad/         ← .step / .dwg / .pdf pince (référence)
 │   └── docs_images/           ← images daGHIZmo (explosions, rendus)
 └── support_chassis.scad       ← à créer : plaque d'adaptation châssis
@@ -29,7 +29,7 @@ bras_v4_eezybot/
 
 - [x] ~~Télécharger le zip STL Thingiverse~~
 - [x] ~~Extraire et trier les STL (print / skip)~~
-- [ ] **Imprimer les 16 STL dans `print/`** (voir tableau §STL à imprimer)
+- [ ] **Imprimer les 14 STL dans `print/`** (voir tableau §STL à imprimer)
 - [ ] Commander la visserie M4 (voir `../BRAS_ROBOTIQUE_SPEC.md` §BOM)
 - [ ] Prendre les mesures du châssis Mecanum (voir `../BRAS_ROBOTIQUE_SPEC.md` §5.2)
 - [ ] Concevoir `support_chassis.scad` en OpenSCAD (prochaine session Claude)
@@ -47,8 +47,7 @@ bras_v4_eezybot/
 | `EBAmk2_003_varm.STL` | Bras vertical du parallélogramme (piloté par MG996R #2) | 1 | |
 | `EBAmk2_004_link135.STL` | Biellette droite 135 mm | 1 | Imprimer à plat |
 | `EBAmk2_005_link135angled.STL` | Biellette 135 mm coudée | 1 | Idem |
-| `EBAmk2_006_horarm__.STL` | Avant-bras horizontal (base) | **Choix** | Version originale |
-| `EBAmk2_006_horarm_plate.STL` | Avant-bras horizontal avec plaque de renfort | **Choix** | Version renforcée — **privilégier celle-ci** |
+| `EBAmk2_006_horarm_plate.STL` | Avant-bras horizontal (avec plaque de renfort) | 1 | Version renforcée retenue (alternative `_horarm__` mise dans `skip/`) |
 | `EBAmk2_007_trialink.STL` | Triangle de liaison | 1 | |
 | `EBAmk2_008_link147_new.STL` | Biellette 147 mm (version mise à jour) | 1 | |
 | `EBAmk2_009_trialinkfront.STL` | Triangle avant (porte la pince) | 1 | |
@@ -57,11 +56,8 @@ bras_v4_eezybot/
 | `EBAmk2_016_claw_gear_drive.STL` | Engrenage menant (sur SG90) | 1 | Petite pièce, brim recommandé |
 | `EBAmk2_017_claw_finger_sx.STL` | Doigt gauche mâchoire | 1 | |
 | `EBAmk2_018_claw_gear_driven.STL` | Engrenage mené | 1 | Petite pièce, brim recommandé |
-| `EBAmk2_019_drive_cover.STL` | Capot esthétique pince | 1 | **Optionnel** |
 
-> **Choix `006_horarm__` ou `006_horarm_plate`** : imprimer en priorité la version `_plate` (renforcée). La version `__` n'est à imprimer que si la `_plate` ne convient pas à l'assemblage. Les deux sont dans `print/` pour laisser le choix.
-
-**Total à imprimer : 14 pièces obligatoires + 1 optionnelle + 1 choix sur 2 (horarm) = ~15 prints.**
+**Total à imprimer : 14 prints.**
 
 ### Paramètres d'impression recommandés
 | Paramètre | Valeur |
@@ -76,10 +72,12 @@ bras_v4_eezybot/
 
 ---
 
-## STL à ignorer ❌ (dossier `stl_original/skip_no_rotation/`)
+## STL à ignorer ❌ (dossier `stl_original/skip/`)
 
 | Fichier | Rôle (dans MK2 standard) | Pourquoi zappé |
 |---|---|---|
+| `EBAmk2_006_horarm__.STL` | Avant-bras sans plaque de renfort | Variante non retenue — on imprime `_plate` à la place |
+| `EBAmk2_019_drive_cover.STL` | Capot esthétique pince (cache les engrenages) | Optionnel — non imprimé |
 | `EBAmk2_010_gearservo.STL` | Pignon sur servo rotation | Pas de rotation |
 | `EBAmk2_010_gearservo_22DENTI.STL` | Variante pignon 22 dents | Idem |
 | `EBAmk2_011_gearmast.STL` | Couronne dentée de rotation | Idem |
