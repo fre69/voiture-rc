@@ -19,7 +19,7 @@ bras_v4_eezybot/
 │   ├── README.txt             ← README original daGHIZmo
 │   ├── LICENSE.txt            ← CC BY-NC
 │   ├── print/                 ← 14 STL À IMPRIMER ✅
-│   ├── skip/                  ← 8 STL à ignorer (6 rotation + 1 variante horarm + 1 capot pince optionnel) ❌
+│   ├── skip/                  ← 8 STL à ignorer (7 rotation + 1 variante horarm) ❌
 │   ├── reference_cad/         ← .step / .dwg / .pdf pince (référence)
 │   └── docs_images/           ← images daGHIZmo (explosions, rendus)
 └── support_chassis.scad       ← à créer : plaque d'adaptation châssis
@@ -77,13 +77,13 @@ bras_v4_eezybot/
 | Fichier | Rôle (dans MK2 standard) | Pourquoi zappé |
 |---|---|---|
 | `EBAmk2_006_horarm__.STL` | Avant-bras sans plaque de renfort | Variante non retenue — on imprime `_plate` à la place |
-| `EBAmk2_019_drive_cover.STL` | Capot esthétique pince (cache les engrenages) | Optionnel — non imprimé |
 | `EBAmk2_010_gearservo.STL` | Pignon sur servo rotation | Pas de rotation |
 | `EBAmk2_010_gearservo_22DENTI.STL` | Variante pignon 22 dents | Idem |
 | `EBAmk2_011_gearmast.STL` | Couronne dentée de rotation | Idem |
 | `EBAmk2_011_gearmast_full.STL` | Variante couronne pleine | Idem |
 | `EBAmk2_012_mainbase.STL` | Plateau rotatif intermédiaire (sur billes) | Idem |
 | `EBAmk2_013_lower_base.STL` | Base fixe inférieure (contient servo rotation + roulement 606ZZ) | **Remplacée par `support_chassis.scad` custom** |
+| `EBAmk2_019_drive_cover.STL` | Capot du mécanisme d'entraînement rotation (se clipse sur `012_mainbase`) | Pas de rotation = rien à couvrir |
 
 Matériel également économisé : **1× MG996R, 1× roulement 606ZZ, 25× billes Ø6 mm, 1× vis M6×25, 1× écrou nylstop M6**.
 
