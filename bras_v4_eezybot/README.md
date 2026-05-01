@@ -14,6 +14,7 @@ Site auteur : http://www.eezyrobots.it/eba_mk2.html
 ```
 bras_v4_eezybot/
 ├── README.md                  ← ce fichier
+├── MANUEL_MONTAGE.md          ← guide pas-à-pas adapté (sans rotation)
 ├── NOTES_ASSEMBLAGE.md        ← journal d'assemblage à remplir
 ├── stl_original/
 │   ├── README.txt             ← README original daGHIZmo
@@ -34,7 +35,7 @@ bras_v4_eezybot/
 - [ ] Prendre les mesures du châssis Mecanum (voir `../BRAS_ROBOTIQUE_SPEC.md` §5.2)
 - [ ] Concevoir `support_chassis.scad` en OpenSCAD (prochaine session Claude)
 - [ ] Imprimer `support_chassis`
-- [ ] Assembler selon https://www.instructables.com/EEZYbotARM-Mk2-3D-Printed-Robot/ **(sauter toute la partie base tournante)**
+- [ ] Assembler selon `MANUEL_MONTAGE.md` (manuel adapté, sans rotation)
 
 ---
 
